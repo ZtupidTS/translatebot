@@ -72,9 +72,7 @@
 
   async function onMessage(payload) {
     try {
-      const text = payload.message.text
-      console.log(text)
-      const argumentText = payload.message.argumentText
+      const argumentText = payload.message.argumentText.trim()
       console.log(argumentText)
       return argumentText
     } catch (e) {
@@ -86,7 +84,7 @@
   function formatTranslateRequest(reqBody) {
     try {
       //get the first value as the target language
-      let target = reqBody.slice(0,4).trim()
+      let target = reqBody.slice(0,3).trim()
       console.log("length: " + target.length)
       //get the second value as the message to be translated from
       let text = reqBody.slice(3)
@@ -136,24 +134,30 @@
   async function getTranslateResult(response) {
     const { headers } = response
     const contentType = headers.get('content-type')
-    if (contentType.includes('application/json')) {
+    if (response.status == "200" && contentType.includes('application/json')) {
       return await response.json()
     } else {
-      return "Content type must be in JSON format"
+      return "Failed response from Google Translate"
     }
   }
 
   function formatChatRequest(results) {
     try {
+      let translated = ''
+      if (results.data) {
       //get translations as an array from the results object
       let [translations] = results.data.translations
       translations = Array.isArray(translations) ? translations : [translations]
       console.log(translations)
     
       //construct the translations as strings to be returned
-      let translated = '[' + translations[0].detectedSourceLanguage + '] ' + translations[0].translatedText
+      translated = '[' + translations[0].detectedSourceLanguage + '] ' + translations[0].translatedText
       console.log(translated)
-        
+      } else {
+        translated = "Sorry, I can't understand that. Try: " + this.getUsage()
+      }
+      console.log(translated)
+
     //format the result to be returned to Google Chat API
       const chatBody = {
         text: translated
