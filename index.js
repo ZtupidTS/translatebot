@@ -5,17 +5,18 @@
    */
   async function handlePostRequest(request) {
     try {
-    //get the request body from Google Chat API
+    //get the request body from Google Chat API as a string
     const reqBody = await readRequestBody(request)
     console.log(reqBody)
-    //split the request body into array
-    const message = reqBody.split(':')
-    console.log(message)
     //get the first value as the target language
-    const target = message[0].trim()
+    let target = reqBody.slice(0,3).trim()
     console.log(target)
+    if (target.length === 3) {
+      return "Target language must be 2 characters"
+    }
     //get the second value as the message to be translated from
-    const text = message[1]
+    //const text = message[1]
+    let text = reqBody.slice(3)
     console.log(text)
   
     //construct POST body to send to Google Translate API
