@@ -1,8 +1,15 @@
-// POST request handler
-async function handlePostRequest(request) {
-
+  /**
+   * POST request handler gets the request body from Google Chat API,
+   * makes a POST request to Google Translate API, then returns back the response to Google Chat API
+   * @param {Request} request the incoming request to read from
+   */
+  async function handlePostRequest(request) {
+    try {
+    //get the request body from Google Chat API
     let reqBody = await readRequestBody(request)
+    //get the first argument as the target language
     let target = reqBody[0]
+    //get the second argument as the message to be translated from
     let text = reqBody[1]
   
     //construct POST body to send to Google Translate API
@@ -11,6 +18,7 @@ async function handlePostRequest(request) {
       "q": text
     }
   
+    //format the POST request
     const init = {
       body: JSON.stringify(body),
       method: 'POST',
@@ -24,10 +32,14 @@ async function handlePostRequest(request) {
     const results = await gatherResponse(response)
   
   //get translations as an array from the results object
+  if(results.data.translations) {
     let [translations] = results.data.translations
-    translations = Array.isArray(translations) ? translations : [translations];
-  
-  //construct the translations as strings to be returned
+    translations = Array.isArray(translations) ? translations : [translations]
+  } else {
+    console.error("Malformed response. No translation data received.")
+  }
+
+    //construct the translations as strings to be returned
     let translated = '[' + translations[0].detectedSourceLanguage + '] ' + translations[0].translatedText
     console.log(translated)
   
@@ -42,6 +54,10 @@ async function handlePostRequest(request) {
           "Cache-Control": "no-cache"
       }
     })
+    } catch (e) {
+        console.error(e.stack)
+        return `Malformed request. ${e.message}`
+    }
   }
   
   addEventListener('fetch', event => {
@@ -58,15 +74,12 @@ async function handlePostRequest(request) {
     const contentType = headers.get('content-type')
     if (contentType.includes('application/json')) {
       return await response.json()
-    } else if (contentType.includes('application/text')) {
-      return await response.text()
-    } else if (contentType.includes('text/html')) {
-      return await response.text()
     } else {
-      return await response.text()
+      console.log("non JSON data")
+      return "Content type must be in JSON format"
     }
   }
-  
+
   //get Google Translate API key from secrets
   const key = GCP_API_KEY
   
@@ -74,14 +87,47 @@ async function handlePostRequest(request) {
   const url = 'https://translation.googleapis.com/language/translate/v2?key=' + key
   
   /**
-   * readRequestBody reads in the incoming request body
+   * readRequestBody reads in the incoming request body from Google Chat API and
+   * parse the payload as JSON object to another function according to the request type 
    * Use await readRequestBody(..) in an async function to get the string
    * @param {Request} request the incoming request to read from
    */
   async function readRequestBody(request) {
       const body = await request.text()
-      const obj = JSON.parse(body)
-      const message = obj.message.argumentText.split(':')
+      const payload = JSON.parse(body)
+      switch (payload.type) {
+        case "ADDED_TO_SPACE":
+          return this.onAddedToSpace()
+        case "REMOVED_FROM_SPACE":
+          return this.onRemovedFromSpace()
+        case "MESSAGE":
+          return await this.onMessage(payload)
+        default:
+          return "Unknown message type"
+    }
+  }
+
+  function onAddedToSpace() {
+    return "Thank you for adding me! To start, type " + this.getUsage()
+  }
+
+  function getUsage() {
+    return "@translate target_language sentence"
+  }
+
+  function onRemovedFromSpace() {
+    return "Sayonara!"
+  }
+
+  async function onMessage(payload) {
+    try {
+      const msg = payload.message
+      const arg = msg.argumentText || ""
+      const message = arg.split(':')
       console.log(message)
       return message
+    } catch (e) {
+        console.error(e.stack)
+        return `Sorry, I can't understand that. ${e.message}`
+    }
   }
