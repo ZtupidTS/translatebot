@@ -6,14 +6,20 @@
   async function handlePostRequest(request) {
     try {
     //get the request body from Google Chat API
-    let reqBody = await readRequestBody(request)
-    //get the first argument as the target language
-    let target = reqBody[0]
-    //get the second argument as the message to be translated from
-    let text = reqBody[1]
+    const reqBody = await readRequestBody(request)
+    console.log(reqBody)
+    //split the request body into array
+    const message = reqBody.split(':')
+    console.log(message)
+    //get the first value as the target language
+    const target = message[0].trim()
+    console.log(target)
+    //get the second value as the message to be translated from
+    const text = message[1]
+    console.log(text)
   
     //construct POST body to send to Google Translate API
-    let body = {
+    const body = {
       "target": target,
       "q": text
     }
@@ -32,12 +38,9 @@
     const results = await gatherResponse(response)
   
   //get translations as an array from the results object
-  if(results.data.translations) {
     let [translations] = results.data.translations
     translations = Array.isArray(translations) ? translations : [translations]
-  } else {
-    console.error("Malformed response. No translation data received.")
-  }
+    console.log(translations)
 
     //construct the translations as strings to be returned
     let translated = '[' + translations[0].detectedSourceLanguage + '] ' + translations[0].translatedText
@@ -121,10 +124,7 @@
 
   async function onMessage(payload) {
     try {
-      const msg = payload.message
-      const arg = msg.argumentText || ""
-      const message = arg.split(':')
-      console.log(message)
+      const message = payload.message.argumentText
       return message
     } catch (e) {
         console.error(e.stack)
