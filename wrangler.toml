@@ -1,0 +1,8 @@
+name = "translatebot"
+type = "javascript"
+account_id = "CLOUDFLARE_ACCOUNT_ID"
+route = "CLOUDFLARE_WORKERS_ROUTE"
+zone_id = "CLOUDFLARE_ZONE_ID"
+
+[env.dev]
+workers_dev = true

@@ -1,0 +1,9 @@
+{
+    "private": true,
+    "name": "translatebot",
+    "version": "1.0.0",
+    "description": "Google Chat bot to interact with Google Translate",
+    "main": "index.js",
+    "author": "Faiz Azhar <faiz@cloudflare.com>",
+    "license": "MIT"
+}
