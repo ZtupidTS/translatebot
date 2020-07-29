@@ -1,23 +1,21 @@
   /**
    * POST request handler gets the request body from Google Chat API,
-   * makes a POST request to Google Translate API, then returns back the response to Google Chat API
-   * @param {Request} request the incoming request to read from
+   * makes a POST request to Google Translate API, then returns back the response to Google Chat API.
+   * @param {Request} request - the incoming request to read from
    */
   async function main(request) {
     try {
     //get the request body from Google Chat API
     const reqBody = await readChatBody(request)
-    console.log(reqBody)
+    //format the request body to parse to Google Translate API
     const body = formatTranslateRequest(reqBody)
+    //POST request handler to Google Translate API
     const response = await postToTranslateAPI(body)
-    console.log(response)
-  
     //get results object from Google Translate API response
     const results = await getTranslateResult(response)
-  
+    //format request body to return to Google Chat API
     const chatBody = formatChatRequest(results)
-    console.log(chatBody)
-
+    //POST request handler to return the translated result back to Google Chat
     const chatResponse = await postToChatAPI(chatBody)
     return chatResponse
     
@@ -31,7 +29,7 @@
       event.respondWith(main(event.request))
   })
 
-  //get Google Translate API key from secrets
+  //get Google Translate API key from Workers secrets
   const key = GCP_API_KEY
   
   //construct Google Translate URL with authentication key
@@ -39,9 +37,9 @@
   
   /**
    * readChatBody reads in the incoming request body from Google Chat API and
-   * parse the payload as JSON object to another function according to the request type 
-   * Use await readChatBody(..) in an async function to get the string
-   * @param {Request} request the incoming request to read from
+   * parse the payload as JSON object to another function according to the request type .
+   * Use await readChatBody(..) in an async function to get the string.
+   * @param {Request} request - the incoming request to read from
    */
   async function readChatBody(request) {
       const body = await request.text()
@@ -81,6 +79,11 @@
     }
   }
 
+  /**
+   * formatTranslateRequest takes the string argument and process it into a format that
+   * Google Translate API are able to process.
+   * @param {string} reqBody - the incoming request body to read from
+   */
   function formatTranslateRequest(reqBody) {
     try {
       //get the first value as the target language
@@ -107,6 +110,11 @@
   }
 }
 
+  /**
+   * postToTranslateAPI is a POST request handler function that makes a Worker's subrequest
+   * to Google Translate API.
+   * @param {Object} body - the incoming request body to read from
+   */
   async function postToTranslateAPI(body) {
     try {
     //format the POST request to send to Google Translate API
@@ -118,7 +126,7 @@
       },
     }
     const response = await fetch(url, init)
-    console.log(response)
+    //console.log(response)
     return response
     } catch (e) {
         console.error(e.stack)
@@ -127,9 +135,9 @@
   }
 
    /**
-   * getTranslateResult awaits and returns a response body as a string.
-   * Use await getTranslateResult(..) in an async function to get the response body
-   * @param {Response} response
+   * getTranslateResult awaits and returns the response body from Google Translate API as a string.
+   * Use await getTranslateResult(..) in an async function to get the response body.
+   * @param {Response} response - the incoming response to read from
    */
   async function getTranslateResult(response) {
     const { headers } = response
@@ -141,6 +149,11 @@
     }
   }
 
+   /**
+   * formatChatRequest takes the response and process it into a format that
+   * Google Chat API are able to process.
+   * @param {Request} results - the incoming request to read from
+   */
   function formatChatRequest(results) {
     try {
       let translated = ''
@@ -148,15 +161,12 @@
       //get translations as an array from the results object
       let [translations] = results.data.translations
       translations = Array.isArray(translations) ? translations : [translations]
-      console.log(translations)
     
       //construct the translations as strings to be returned
-      translated = '[' + translations[0].detectedSourceLanguage + '] ' + translations[0].translatedText
-      console.log(translated)
+      translated = `[${translations[0].detectedSourceLanguage}] ${translations[0].translatedText}`
       } else {
-        translated = "Sorry, I can't understand that. Try: " + this.getUsage()
+        translated = "Sorry, I don't understand that. Try: " + this.getUsage()
       }
-      console.log(translated)
 
     //format the result to be returned to Google Chat API
       const chatBody = {
@@ -165,10 +175,15 @@
       return chatBody
     } catch (e) {
         console.error(e.stack)
-        return `Sorry, I can't understand that. ${e.message}`
+        return `Sorry, I don't understand that. ${e.message}`
     }
   }
 
+   /**
+   * postToChatAPI creates a response object to return the result back
+   * to Google Chat API.
+   * @param {Object} body - the incoming request body to read from
+   */
   async function postToChatAPI(body) {
     try {
       const chatBody = JSON.stringify(body)
@@ -182,6 +197,6 @@
       return new Response(chatBody, init)
     } catch (e) {
         console.error(e.stack)
-        return `Sorry, I can't understand that. ${e.message}`
+        return `Sorry, I don't understand that. ${e.message}`
     }
   }
