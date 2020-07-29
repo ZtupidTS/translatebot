@@ -1,8 +1,8 @@
-##Google Translate ChatBot
+# Google Translate ChatBot
 
 This is a Workers script that processes the text sent to the bot from a Google Chat client and returns the translated result from Google Translate.
 
-###Getting Started
+## Getting Started
 
 Create a Google Chat bot by enabling the [Hangouts Chat API](https://developers.google.com/hangouts/chat/how-tos/bots-publish) in a project within your gSuite account.
 Give it a name, description and icon.
@@ -41,7 +41,7 @@ You can also deploy this to a workers.dev by running:
 wrangler publish --env dev
 ```
 
-###How to use
+## How to use
 
 - The first argument is the language to be translated to.
 - The second argument is the sentence to translate from.
