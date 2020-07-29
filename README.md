@@ -46,6 +46,7 @@ wrangler publish --env dev
 - The first argument is the language to be translated to.
 - The second argument is the sentence to translate from.
 - When first argument is not specified, "en" will be assumed and the text will be translated to English by default.
+- The language of the original sentence will be detected and returned in a square bracket.
 
 To interact with the bot in a DM:
 
